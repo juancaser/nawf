@@ -101,7 +101,7 @@ class Router{
 
           foreach($routes as $pattern => $callback){            
                if(preg_match($pattern, $uri, $params)) {
-                    array_shift($params);                
+                    array_shift($params);
                     return call_user_func_array($callback, array_values($params));
                }
           }
