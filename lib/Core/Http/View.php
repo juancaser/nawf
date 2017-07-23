@@ -46,6 +46,7 @@ class View {
           
           $path = $this->path.DIRECTORY_SEPARATOR.$view.'.php';
           if(file_exists($path)){
+               
                return $path;
           }else{
                return false;
@@ -83,7 +84,7 @@ class View {
       * @param bool $return
       * @return string
       */
-     public function display($view, array $vars = null, $return = false){
+     public function display($view, array $vars = null, $echo = false){
           if($path = $this->locate_view($view)){
                $this->load($view, $vars);
                $content = $this->load($this->layout);
@@ -92,7 +93,7 @@ class View {
                // of the data that is not part of the view class
                $content = Middleware::run('view.display',$path, $content);
                
-               if($return){
+               if(!$echo){
                     return $content;
                }else{
                     echo $content;
