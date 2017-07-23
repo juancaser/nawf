@@ -7,15 +7,12 @@
  * Router
  */
 
-Route::domain('test.nawf.dev', function(){
-	Route::get('/about', function(){
-		 return view('about');
-	});
+Route::get('/', function(){
+	return View::display('home');
 });
 
- 
-Route::get('/', function(){
-	 return view('home');
+Route::get('about', function(){
+	return View::display('about');
 });
 
 
@@ -23,6 +20,6 @@ Route::get('/', function(){
 Route::error(function($err_code){
 	 if($err_code == 404){
 		  header($_SERVER['SERVER_PROTOCOL'].' 404 Not Found');		  
-		  exit(view('error/notfound'));
+		  //exit(view('error/notfound'));
 	 }
 });
