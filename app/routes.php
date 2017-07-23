@@ -7,12 +7,15 @@
  * Router
  */
 
-Route::get('/', function(){
-	 return view('home');
+Route::domain('test.nawf.dev', function(){
+	Route::get('/about', function(){
+		 return view('about');
+	});
 });
 
-Route::get('/about', function(){
-	 return view('about');
+ 
+Route::get('/', function(){
+	 return view('home');
 });
 
 

@@ -6,6 +6,7 @@
  *
  * View class
  */
+use Core\Support\Facades\Middleware;
 
 class View {
      /**
@@ -13,80 +14,148 @@ class View {
       *
       * @access private
       */
-     private $vars = array();
+     private $vars = [];
+     
+     private $path;
+     private $layout;
+     
      
      /**
       * Section hook
       *
       * @access private
       */
-     private $sections = array();
-     
+     private $sections = [];
      
      /**
-      * Display loaded view
+      * Set view path
+      *
+      * @param string $path
+      */
+     public function path($path){
+          $this->path = $path;
+     }
+     
+     
+     private function locate_view($view){
+          $view = str_replace(['\\','/'], DIRECTORY_SEPARATOR,$view);
+          $view_ex = explode('.',$view);
+          if(count($view_ex) > 1){
+               $view = implode(DIRECTORY_SEPARATOR,$view_ex);
+          }
+          
+          $path = $this->path.DIRECTORY_SEPARATOR.$view.'.php';
+          if(file_exists($path)){
+               return $path;
+          }else{
+               return false;
+          }
+     }
+     
+     /**
+      * Return loaded view
       *
       * @param string $view
-      * @param array $args
+      * @param array $vars
       * @return string
       */
-     public function display($view, $args = null){
-          ob_start();
-          $this->inc($view,$args);
-          $data = ob_get_clean();
-          return $data;
+     private function load($view, array $vars = null){
+          $content = '';
+          if($path = $this->locate_view($view)){
+               $_vars = null;
+               if(!is_null($vars)){
+                    foreach($vars as $key => $value){
+                         $this->setVar($key, $value);
+                    }
+               }
+               ob_start();
+               include($path);
+               $content = ob_get_clean();
+          }
+          return $content;
      }
+     
+     /**
+      * Display the loaded view
+      *
+      * @param string $view
+      * @param array $vars
+      * @param bool $return
+      * @return string
+      */
+     public function display($view, array $vars = null, $return = false){
+          if($path = $this->locate_view($view)){
+               $this->load($view, $vars);
+               $content = $this->load($this->layout);
+               
+               // Send content to middleware just incase there is another processing
+               // of the data that is not part of the view class
+               $content = Middleware::run('view.display',$path, $content);
+               
+               if($return){
+                    return $content;
+               }else{
+                    echo $content;
+               }
+          }
+     }
+     
+     /**
+      * Set view layout
+      */
+     public function layout($view){
+          $this->layout = $view;
+     }
+     
      
      /**
       * Getter and Setter
       */
      public function __set($key, $value){
-          $this->set_var($key, $value);
+          $this->setVar($key, $value);
      }
      public function __get($key){
-          if(isset($this->vars[$key])) return $this->vars[$key];
-          return;
-     }     
-     public function set_var($key, $value){
+          return $this->getVar($key);
+     }
+     
+     /**
+      * Set variable
+      *
+      * @param string $key
+      * @param string $value
+      */
+     public function setVar($key, $value){
           $this->vars[$key] = $value;
      }
      
-     
      /**
-      * Add section block
+      * Get variable
       *
-      * @param string $name
-      * @param callable $callback
+      * @param string $key
+      * @return any
       */
-     public function block($name, $callback){
+     public function getVar($key){
+          if(array_key_exists($key, $this->vars)) return $this->vars[$key];
+          return;
+     }
+     
+     public function block($name, $callback = null){          
+          if(array_key_exists($name, $this->sections)){
+               foreach($this->sections[$name] as $section){
+                    if(is_callable($callback)){
+                         ob_start();
+                         call_user_func($callback);
+                         $cb = ob_get_clean();
+                         echo call_user_func_array($section, [$cb]);                         
+                    }else{
+                         echo call_user_func($section);     
+                    }                    
+               }          
+          }
+     }
+     
+     public function section($name, $callback){
           $this->sections[$name][] = $callback;
      }
 
-     /**
-      * Load section blocks
-      *
-      * @param string $name
-      */     
-     public function section($name){
-          if(!isset($this->sections[$name])) return;
-          foreach($this->sections[$name] as $section){
-               call_user_func($section);
-          }
-     }
-     
-     /**
-      * Load view
-      *
-      * @param string $view
-      * @param array $args
-      */
-     private function inc($view, $args = null){
-          $view = trim(str_replace(array('.','\\','/'),DIRECTORY_SEPARATOR,$view),DIRECTORY_SEPARATOR);          
-          if(file_exists($path = config('app.path.view').DIRECTORY_SEPARATOR.$view.'.php')){
-               if(is_array($args)) $this->vars = array_merge($this->vars,$args);
-               if(count($this->vars) > 0) extract($this->vars);
-               include($path);     
-          }
-          
-     }
 }

@@ -8,7 +8,7 @@
  */
 
 // Set absolute path
-define('ABSPATH', dirname(__DIR__));
+define('ABSPATH', realpath('./'));
 
 // Display all error
 if(defined('ERR_REPORTING') && !is_bool(ERR_REPORTING)){    
@@ -22,12 +22,7 @@ include('autoloader.php');
 /**
  * Load all global helper
  */
-include('helper/path.php');
-include('helper/config.php');
-include('helper/view.php');
-include('helper/string.php');
-include('helper/url.php');
-
+include('helper.php');
 
 /**
  * Load autoload class
