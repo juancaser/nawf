@@ -32,6 +32,9 @@ foreach($autoload as $name => $class){
     class_alias($class, $name);   
 }
 
+// Set view path
+View::path(config('app.path.view'));
+
 /**
  * Init
  *
